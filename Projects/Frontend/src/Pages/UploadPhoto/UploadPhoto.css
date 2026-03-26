@@ -1,0 +1,100 @@
+.upload-photo-page {
+	min-height: 100vh;
+	width: min(920px, calc(100vw - 48px));
+	margin: 0 auto;
+	padding: 32px 0 48px;
+	color: var(--text);
+}
+
+.upload-photo-header {
+	margin-bottom: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.upload-photo-title {
+	font-size: 30px;
+	margin: 0;
+}
+
+.upload-photo-actions {
+	display: flex;
+	gap: 10px;
+}
+
+.upload-photo-card {
+	background: var(--surface-muted);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	padding: 18px;
+}
+
+.upload-photo-form {
+	display: grid;
+	gap: 16px;
+}
+
+.upload-photo-group {
+	display: grid;
+	gap: 8px;
+}
+
+.upload-photo-group label {
+	font-weight: 700;
+}
+
+.upload-photo-file-input {
+	width: 100%;
+	max-width: 100%;
+}
+
+.upload-photo-file-name {
+	margin: 0;
+	font-size: 14px;
+	opacity: 0.9;
+	word-break: break-all;
+}
+
+.upload-photo-textarea {
+	width: 100%;
+	max-width: 100%;
+	min-height: 84px;
+	resize: vertical;
+	border-radius: 10px;
+	border: 1px solid var(--input-border);
+	background: var(--input-bg);
+	color: var(--text);
+	padding: 10px 12px;
+}
+
+.upload-photo-textarea::placeholder {
+	color: var(--text-soft);
+}
+
+.upload-photo-submit {
+	display: flex;
+	justify-content: flex-start;
+}
+
+.upload-photo-message {
+	margin: 0;
+	opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+	.upload-photo-page {
+		width: calc(100vw - 24px);
+		padding-top: 20px;
+	}
+
+	.upload-photo-header {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.upload-photo-title {
+		font-size: 24px;
+	}
+}

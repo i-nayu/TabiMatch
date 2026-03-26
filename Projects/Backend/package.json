@@ -1,0 +1,17 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.13.6",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "mysql2": "^3.19.0",
+    "node-cron": "^4.2.1",
+    "qrcode": "^1.5.4",
+    "symbol-sdk": "^3.3.0"
+  }
+}

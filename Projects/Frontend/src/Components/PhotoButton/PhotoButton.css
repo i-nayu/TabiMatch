@@ -1,0 +1,52 @@
+* {
+    /*初期設定*/
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+    width: 100%;
+}
+
+.PhotoButton {
+    /*大きさ設定*/
+    max-height: 400px;
+    max-width: 400px;
+    width: 100%;
+    height: 100%;
+
+    /*位置設定*/
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    /*背景設定*/
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+
+    /*文字設定*/
+    color: var(--text);
+    font-weight: bold;
+    font-size: 40px;
+
+    /*余白設定*/
+    margin-bottom: 20px;
+}
+
+.PhotoButtonicon {
+    /*大きさ設定*/
+    height: 80%;
+    width: 100%;
+    max-height: 200px;
+    max-width: 200px;
+
+    /*画像設定*/
+    object-fit: contain;
+}
+
+
