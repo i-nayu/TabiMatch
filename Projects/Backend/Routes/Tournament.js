@@ -17,8 +17,6 @@ import LeftToken from '../Tools/LeftToken.js';
 import GetCurrencyMosaicId from '../Tools/GetCurrencyMosaicId.js';
 import GetAddress from '../Tools/GetAddress.js';
 import CreateTournament from '../Tools/CreateTournament.js';
-import GetMetaData from '../Tools/GetMetaData.js';
-import AddWaterMark from '../Tools/AddWaterMark.js';
 
 // ==========================
 // 環境変数の読み込み
@@ -148,13 +146,11 @@ router.post('/PhotoList', async (req, res) => {
             []
         );
         if (!createResults || createResults.length === 0) {
-            if (address) {
-                await DBPerf(
-                    "Update vote",
-                    "UPDATE Vote SET Vote = false, Give = false WHERE Address = ?",
-                    [address]
-                );
-            }
+            await DBPerf(
+                "Update vote",
+                "UPDATE Vote SET Vote = false AND Give = false WHERE Address = ?",
+                [address]
+            );
             console.log("[Tournament] No Mosaic Found. Create Tournament.");
             await CreateTournament();
         }
@@ -167,7 +163,6 @@ router.post('/PhotoList', async (req, res) => {
                 "SELECT Vote, Give FROM Vote WHERE Address = ?; ",
                 [address]
             );
-
             const vote = voteResult[0].Vote; //投票したかどうか
             const give = voteResult[0].Give; //配布されたかどうか
 
@@ -299,25 +294,16 @@ router.post('/PhotoList', async (req, res) => {
             return res.status(400).json({ message: "現在開催中のトーナメントがありません" });
         }
         const mosaicIdHex = mosaicId[0].MosaicID;
-        if (address) {
-            const userVote = await LeftToken(address, mosaicIdHex, nodeUrl) ?? 0;
-            console.log(`User ${address} has ${userVote} vote tokens left.`);
-        }
+        const userVote = await LeftToken(address, mosaicIdHex, nodeUrl) ?? 0;
+        console.log(`User ${address} has ${userVote} vote tokens left.`);
 
         // すでに取得している mosaicIdHex を利用
         let photos = await DBPerf(
             "Get Photo List",
-            `SELECT PhotoID, PhotoPath, Comment, PhotoTime, PhotoLat, PhotoLng 
+            `SELECT PhotoID, PhotoPath, Comment 
             FROM Photos 
             WHERE MosaicID = ?`,
             [mosaicIdHex]
-        );
-
-        photos = await Promise.all(
-                photos.map(async (photo) => {
-                photo.PhotoPath = await AddWaterMark(photo.PhotoPath);
-                return photo;
-            })
         );
 
         const expireResult = await DBPerf(
@@ -372,8 +358,6 @@ router.post('/Upload', uploadPhotoMiddleware, async (req, res) => {
             return res.status(400).json({ message: "Photo is required" });
         }
 
-        const { takenAt, location } = await GetMetaData(req.file.buffer);
-
         const address = GetAddress("testnet", privateKey);
 
         //すでに写真を投稿していないかチェック
@@ -399,7 +383,7 @@ router.post('/Upload', uploadPhotoMiddleware, async (req, res) => {
         if (!userResult.length) {
             return res.status(404).json({ message: "ユーザーが存在しません" });
         }
-        const PhotoPath = SaveIcon(req.file.buffer, req.file.originalname);
+        const PhotoPath = SaveIcon(req.file);
         console.log("Photo saved at:", PhotoPath);
 
         const mosaicId = await DBPerf(
@@ -411,17 +395,15 @@ router.post('/Upload', uploadPhotoMiddleware, async (req, res) => {
         //写真投稿をDBに保存
         const result = await DBPerf(
             "INSERT Photos",
-            `INSERT INTO Photos(Address, PhotoPath, Comment, MosaicID, PhotoTime, PhotoLat, PhotoLng)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [address, PhotoPath, comment, mosaicIdHex, takenAt, location.lat, location.lng]
+            `INSERT INTO Photos(Address, PhotoPath, Comment, MosaicID)
+            VALUES (?, ?, ?, ?)`,
+            [address, PhotoPath, comment, mosaicIdHex]
         );
 
         res.status(201).json({
             message: "Uploaded successfully",
             photoId: result.insertId,
-            PhotoPath,
-            takenAt,
-            location
+            PhotoPath
         });
     } catch (err) {
         console.error("Error: Tournament-/Upload", err);
