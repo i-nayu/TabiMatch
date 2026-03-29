@@ -6,11 +6,19 @@ import PhotoButton from "../../Components/PhotoButton/PhotoButton";
 import ConfirmButton from "../../Components/ConfirmButton/ConfirmButton";
 import jsQR from "jsqr";
 
+type TournamentPhoto = {
+  id: number;
+  imageUrl: string;
+  title: string;
+  takenAt: string | null;
+  lat: number | null;
+  lng: number | null;
+};
 
 function Tournament() {
   const navigate = useNavigate();
   const [votesLeft, setVotesLeft] = useState<number | null>(null);
-  const [photos, setPhotos] = useState<any[]>([]);
+  const [photos, setPhotos] = useState<TournamentPhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [expireTime, setExpireTime] = useState<string>("読み込み中...");
@@ -53,6 +61,80 @@ function Tournament() {
     return `${hours}時間${minutes}分${seconds}秒`;
   }
 
+  function formatTakenAt(value: string | null) {
+    if (!value) {
+      return null;
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    return parsed.toLocaleString("ja-JP", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }
+
+  function openMapApp(lat: number, lng: number) {
+    const mapUrl = `https://maps.google.com/?q=${lat},${lng}`;
+    window.open(mapUrl, "_blank", "noopener,noreferrer");
+  }
+
+  function openMapAppByPhoto(photo: TournamentPhoto) {
+    if (photo.lat !== null && photo.lng !== null) {
+      openMapApp(photo.lat, photo.lng);
+      return;
+    }
+
+    // 位置情報がない場合でも地図アプリ自体は必ず開く
+    window.open("https://maps.google.com/", "_blank", "noopener,noreferrer");
+  }
+
+  function parseTakenAt(photo: any): string | null {
+    const candidates = [
+      photo.PhotoTime,
+      photo.takenAt,
+      photo.TakenAt,
+      photo.photoTime,
+    ];
+
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" && candidate.trim().length > 0) {
+        return candidate;
+      }
+      if (candidate instanceof Date && !Number.isNaN(candidate.getTime())) {
+        return candidate.toISOString();
+      }
+    }
+
+    return null;
+  }
+
+  function parseCoordinate(value: unknown): number | null {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    return null;
+  }
+
+  function parseLocation(photo: any) {
+    const lat = parseCoordinate(photo.PhotoLat ?? photo.lat ?? photo.location?.lat);
+    const lng = parseCoordinate(photo.PhotoLng ?? photo.lng ?? photo.location?.lng);
+    return { lat, lng };
+  }
+
   useEffect(() => {
     if (!deadlineAt) {
       return;
@@ -91,6 +173,7 @@ function Tournament() {
           return;
         }
         const data = await res.json();
+        setVoteStatusMessage("");
         if (data.expireTime) {
           const parsedDeadline = new Date(data.expireTime);
           if (Number.isNaN(parsedDeadline.getTime())) {
@@ -103,14 +186,27 @@ function Tournament() {
           setDeadlineAt(null);
           setExpireTime("-");
         }
+        const rawPhotos = Array.isArray(data.photos)
+          ? data.photos
+          : Array.isArray(data.photoList)
+            ? data.photoList
+            : [];
+
         // データの正規化
-        const normalizedPhotos = data.photos.map((photo: any) => ({
-          id: photo.PhotoID,
-          imageUrl: photo.PhotoPath,
-          title: photo.Comment,
-        }));
+        const normalizedPhotos: TournamentPhoto[] = rawPhotos.map((photo: any) => {
+          const location = parseLocation(photo);
+          return {
+            id: Number(photo.PhotoID ?? photo.photoId ?? 0),
+            imageUrl: String(photo.PhotoPath ?? photo.photoPath ?? ""),
+            title: String(photo.Comment ?? photo.comment ?? ""),
+            takenAt: parseTakenAt(photo),
+            lat: location.lat,
+            lng: location.lng,
+          };
+        });
         setPhotos(normalizedPhotos);
-        setVotesLeft(Number(data.votesLeft));
+        const nextVotesLeft = Number(data.votesLeft);
+        setVotesLeft(Number.isFinite(nextVotesLeft) ? nextVotesLeft : 0);
       } catch (error) {
         toast.error("通信エラー");
       } finally {
@@ -255,7 +351,7 @@ function Tournament() {
 
         <article className="status-card">
           <p className="status-label">残り投票数</p>
-          <p className="status-value">{votesLeft}</p>
+          <p className="status-value">{votesLeft ?? 0}</p>
         </article>
       </section>
 
@@ -287,6 +383,18 @@ function Tournament() {
                     }
                   }}
                 />
+                <div className="photo-meta">
+                  <p className="photo-meta-text">
+                    撮影日時: {formatTakenAt(photo.takenAt) ?? "取得できませんでした"}
+                  </p>
+                  <button
+                    type="button"
+                    className="map-open-button"
+                    onClick={() => openMapAppByPhoto(photo)}
+                  >
+                    地図で表示
+                  </button>
+                </div>
               </article>
             ))}
         </div>
