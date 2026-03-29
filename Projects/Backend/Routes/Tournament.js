@@ -417,6 +417,16 @@ router.post('/Upload', uploadPhotoMiddleware, async (req, res) => {
         });
     } catch (err) {
         console.error("Error: Tournament-/Upload", err);
+        const uploadErrorMessage = getErrorMessage(err);
+        const isMetadataError =
+            uploadErrorMessage.includes("メタデータ取得エラー");
+
+        if (isMetadataError) {
+            return res.status(400).json({
+                message: `撮影日時と位置情報が取得できる写真を選択してください`
+            });
+        }
+
         res.status(500).json({ message: "Internal Server Error: サーバーエラーが発生しました。" });
     }
 
