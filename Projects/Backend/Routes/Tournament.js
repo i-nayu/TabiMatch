@@ -18,6 +18,7 @@ import GetCurrencyMosaicId from '../Tools/GetCurrencyMosaicId.js';
 import GetAddress from '../Tools/GetAddress.js';
 import CreateTournament from '../Tools/CreateTournament.js';
 import GetMetaData from '../Tools/GetMetaData.js';
+import AddWaterMark from '../Tools/AddWaterMark.js';
 
 // ==========================
 // 環境変数の読み込み
@@ -312,6 +313,13 @@ router.post('/PhotoList', async (req, res) => {
             [mosaicIdHex]
         );
 
+        photos = await Promise.all(
+                photos.map(async (photo) => {
+                photo.PhotoPath = await AddWaterMark(photo.PhotoPath);
+                return photo;
+            })
+        );
+
         const expireResult = await DBPerf(
             "Get ExpireTime",
             `SELECT ExpireTime 
@@ -391,7 +399,7 @@ router.post('/Upload', uploadPhotoMiddleware, async (req, res) => {
         if (!userResult.length) {
             return res.status(404).json({ message: "ユーザーが存在しません" });
         }
-        const PhotoPath = SaveIcon(req.file);
+        const PhotoPath = SaveIcon(req.file.buffer, req.file.originalname);
         console.log("Photo saved at:", PhotoPath);
 
         const mosaicId = await DBPerf(

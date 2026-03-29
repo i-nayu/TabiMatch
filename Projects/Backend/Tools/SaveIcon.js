@@ -1,6 +1,7 @@
 /*========== Manual ==========
 # Input
-file: アイコンファイル
+buffer: アイコンファイルのバッファ
+originalname: アイコンファイルの元の名前（拡張子を取得するため）
 folder: 保存先フォルダ名
 
 # Output
@@ -19,8 +20,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ===アイコン保存処理===
-function SaveIcon(file){
-    const fileName = CreateFileName(file.originalname);
+function SaveIcon(buffer, originalname){
+    const fileName = CreateFileName(originalname);
     const dir = path.join(__dirname, "..", "icons");
 
     // フォルダが存在しない場合は作成
@@ -28,7 +29,7 @@ function SaveIcon(file){
 
     // ファイルを保存
     const fullPath = path.join(dir, fileName);
-    fs.writeFileSync(fullPath, file.buffer);
+    fs.writeFileSync(fullPath, buffer);
 
     console.log(`Icon saved to ${fullPath}`);
 
