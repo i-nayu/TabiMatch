@@ -21,7 +21,7 @@ async function GetMetadata(input) {
     });
 
     if (!data) {
-      throw new Error("写真からデータが取得できません");
+      throw new Error("メタデータ取得エラー: 写真からデータが取得できません");
     }
 
     const takenAt = data.DateTimeOriginal || data.CreateDate;
@@ -29,11 +29,11 @@ async function GetMetadata(input) {
     const lng = data.longitude;
 
     if (!takenAt) {
-      throw new Error("撮影時間が取得できません");
+      throw new Error("メタデータ取得エラー: 撮影日時の情報が取得できません");
     }
 
     if (lat == null || lng == null) {
-      throw new Error("撮影場所が取得できません");
+      throw new Error("メタデータ取得エラー: 緯度・経度の情報が取得できません");
     }
 
     return {
