@@ -15,6 +15,7 @@ type TournamentPhoto = {
   lng: number | null;
 };
 
+
 function Tournament() {
   const navigate = useNavigate();
   const [votesLeft, setVotesLeft] = useState<number | null>(null);
@@ -328,6 +329,8 @@ function Tournament() {
       isSubmittingVoteRef.current = false;
     }
   }
+
+  
 
   return (
     <main className="tournament-page">
