@@ -19,6 +19,7 @@ import GetAddress from '../Tools/GetAddress.js';
 import CreateTournament from '../Tools/CreateTournament.js';
 import GetMetaData from '../Tools/GetMetaData.js';
 import AddWaterMark from '../Tools/AddWaterMark.js';
+import IssueMosaic from '../Tools/IssueMosaic.js';
 
 // ==========================
 // 環境変数の読み込み
@@ -408,12 +409,18 @@ router.post('/Upload', uploadPhotoMiddleware, async (req, res) => {
                 []
             );
         const mosaicIdHex = mosaicId[0].MosaicID;
+
+        const NFTResult = await IssueMosaic(1n, process.env.TOURNAMENT_PRIVATE_KEY, "NFT");
+        if (!NFTResult?.mosaicId) {
+            throw new Error("NFT発行に失敗しました");
+        }
+
         //写真投稿をDBに保存
         const result = await DBPerf(
             "INSERT Photos",
-            `INSERT INTO Photos(Address, PhotoPath, Comment, MosaicID, PhotoTime, PhotoLat, PhotoLng)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [address, PhotoPath, comment, mosaicIdHex, takenAt, location.lat, location.lng]
+            `INSERT INTO Photos(NFTMosaicID, Address, PhotoPath, Comment, MosaicID, PhotoTime, PhotoLat, PhotoLng)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [NFTResult.mosaicId, address, PhotoPath, comment, mosaicIdHex, takenAt, location.lat, location.lng]
         );
 
         res.status(201).json({

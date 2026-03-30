@@ -73,7 +73,7 @@ router.post('/AuctionBuy', async (req, res) => {
 
             //購入できるものを探す
             const userData = await DBPerf("Search amount",
-                `SELECT p.PhotoID, p.PhotoPath, p.Amount, p.Address, p.MosaicID
+                `SELECT p.PhotoID, p.NFTMosaicID, p.PhotoPath, p.Amount, p.Address, p.MosaicID
                 FROM Photos p
                 WHERE p.BidUserID = ? 
                 AND p.Purchased = false
@@ -89,8 +89,9 @@ router.post('/AuctionBuy', async (req, res) => {
             const currencyMosaicId = await GetCurrencyMosaicId(nodeUrl);
 
             for (const photo of userData) {
-                const sendAmount = BigInt(photo.Amount) * 1_000_000n; // XYM → micro-XYM
+                //支払いトランザクション作成
                 console.log("[Buy Photo] Buy Photo Transaction...");
+                const sendAmount = BigInt(photo.Amount) * 1_000_000n; // XYM → micro-XYM
                 const { tx } = CreateTransferTx({
                     networkType: 'testnet',
                     senderPrivateKey: privateKey,
@@ -106,14 +107,41 @@ router.post('/AuctionBuy', async (req, res) => {
                     deadlineHours: 2,
                 });
 
+                //NFTトランザクション作成
+                if (!photo.NFTMosaicID) {
+                    throw new Error(`NFTMosaicID がありません: PhotoID=${photo.PhotoID}`);
+                }
+
+                const { tx: nftTx } = CreateTransferTx({
+                    networkType: 'testnet',
+                    senderPrivateKey: process.env.TOURNAMENT_PRIVATE_KEY,
+                    recipientRawAddress: buyAddress,
+                    messageText: 'Auction Buy',
+                    fee: 100_000n,
+                    mosaics: [
+                        {
+                            mosaicId: BigInt(`0x${photo.NFTMosaicID}`), // NFTを送る
+                            amount: 1n,
+                        },
+                    ],
+                    deadlineHours: 2,
+                });
+
                 //手数料が足りているかどうか
                 const xymAmount = await LeftToken(buyAddress, currencyMosaicId, nodeUrl); // XYM残高取得
                 const transferFee = tx.fee;
+                const NFTFee = nftTx.fee;
+                const totalFee = transferFee + NFTFee + 1_000_000n; // 予備の手数料も考慮
+                console.log("[DEBUG] XYM Amount:", xymAmount.toString());
+                console.log("[DEBUG] Transfer Fee:", transferFee.toString());
+                console.log("[DEBUG] NFT Fee:", NFTFee.toString());
                 console.log("[DEBUG] BuyAddress:", buyAddress);
-                if (BigInt(xymAmount) < transferFee) {
-                    throw new Error(`手数料用XYM不足です: 必要=${transferFee.toString()} / 保有=${xymAmount.toString()}`);
+                if (BigInt(xymAmount) < totalFee) {
+                    throw new Error(`手数料用XYM不足です: 必要=${totalFee.toString()} / 保有=${xymAmount.toString()}`);
                 }
 
+
+                //写真購入のアナウンス
                 console.log("[Buy Photo] Announcing Buy Photo Transaction...");
                 const sendResult = await SignAndAnnounce(
                     tx,
@@ -127,6 +155,21 @@ router.post('/AuctionBuy', async (req, res) => {
                 );
                 txHashes.push(sendResult.hash);
                 console.log("[Auction Buy] Send XYM TX Hash:", sendResult.hash);
+
+                //NFTのアナウンス
+                console.log("[Buy Photo] Announcing NFT Transfer Transaction...");
+                const NFTResult = await SignAndAnnounce(
+                    nftTx,
+                    new PrivateKey(process.env.TOURNAMENT_PRIVATE_KEY),
+                    'https://sym-test-01.opening-line.jp:3001',
+                        {
+                            waitForConfirmation: true,
+                            confirmationTimeoutMs: 180000,
+                            pollIntervalMs: 2000
+                        }
+                );
+                txHashes.push(NFTResult.hash);
+                console.log("[Auction Buy] Send NFT TX Hash:", NFTResult.hash);
             }
             console.log("[Auction Buy] All transfer transactions announced successfully!");
 
