@@ -1,3 +1,15 @@
+/*========== Manual ==========
+# Input
+inputPath: ウォーターマークを付与する対象の画像ファイルのパス
+
+# Output
+画像ファイルの相対パスを返す
+
+#Description
+指定されたパスの画像を読み込み、斜めの白い帯と「見本」の文字を重ねた
+ウォーターマーク付き画像を生成し保存する処理。
+========== Manual ==========*/
+
 import fs from "fs";
 import path from "path";
 import sharp from "sharp";

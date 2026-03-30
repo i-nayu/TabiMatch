@@ -2,7 +2,6 @@
 # Input
 buffer: アイコンファイルのバッファ
 originalname: アイコンファイルの元の名前（拡張子を取得するため）
-folder: 保存先フォルダ名
 
 # Output
 DBに入れる用の「相対パス」を返す
