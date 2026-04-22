@@ -10,7 +10,7 @@ import { PrivateKey } from 'symbol-sdk';
 import DBPerf from './DBPerf.js';
 import { CreateMosaicTx } from './CreateMosaicTx.js';
 import SignAndAnnounce from './SignAndAnnounce.js';
-import CreateSupplyTx from './SupplyMosaic.js';
+import CreateSupplyTx from './CreateSupplyTx.js';
 import GetCurrencyMosaicId from './GetCurrencyMosaicId.js';
 import GetAddress from './GetAddress.js';
 import LeftToken from './LeftToken.js';

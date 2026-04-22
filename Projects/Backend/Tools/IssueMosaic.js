@@ -1,4 +1,36 @@
+/*========== Manual ==========
+# Input
+{
+  supply: number | bigint, // 発行するモザイクの供給量
+  originalPrivateKey: string, // モザイク発行者の秘密鍵（16進数文字列）
+  label: string // ログ識別用ラベル（任意の名前）
+}
 
+# Output(Result Object)
+{
+  success: boolean, // 処理成功フラグ
+  mosaicId: string, // 作成されたモザイクID（16進数・大文字）
+  definitionHash: string, // モザイク定義トランザクションのハッシュ
+  supplyHash: string, // 供給変更トランザクションのハッシュ
+  label: string // 入力時のラベル
+}
+
+# Description
+Symbolブロックチェーン（testnet）上で新規モザイクを発行する非同期関数。
+
+## 注意点
+- 手数料不足の場合はエラーとなり処理は中断される
+- いずれかのトランザクションが失敗した場合、`undefined` を返す
+
+## 依存関数
+- CreateMosaicTx
+- CreateSupplyTx
+- SignAndAnnounce
+- GetCurrencyMosaicId
+- GetAddress
+- LeftToken
+
+========== Manual ==========*/
 
 import path from 'path';
 import dotenv from 'dotenv';
@@ -11,7 +43,7 @@ import { PrivateKey } from 'symbol-sdk';
 import DBPerf from './DBPerf.js';
 import { CreateMosaicTx } from './CreateMosaicTx.js';
 import SignAndAnnounce from './SignAndAnnounce.js';
-import CreateSupplyTx from './SupplyMosaic.js';
+import CreateSupplyTx from './CreateSupplyTx.js';
 import GetCurrencyMosaicId from './GetCurrencyMosaicId.js';
 import GetAddress from './GetAddress.js';
 import LeftToken from './LeftToken.js';
@@ -61,7 +93,7 @@ async function IssueMosaic(supply, originalPrivateKey, label) {
             // まとめて手数料確認
             // =============================
             const nodeUrl = 'https://sym-test-01.opening-line.jp:3001';
-            const serverAddress = GetAddress("testnet", process.env.TOURNAMENT_PRIVATE_KEY);
+            const serverAddress = GetAddress("testnet", privateKey.toString());
             const currencyMosaicId = await GetCurrencyMosaicId(nodeUrl);
             const xymAmount = BigInt(await LeftToken(serverAddress, currencyMosaicId, nodeUrl));
 

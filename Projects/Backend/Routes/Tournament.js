@@ -12,7 +12,7 @@ import DBPerf from '../Tools/DBPerf.js';
 import SaveIcon from '../Tools/SaveIcon.js';
 import CreateTransferTx from '../Tools/CreateTransferTx.js';
 import SignAndAnnounce from '../Tools/SignAndAnnounce.js';
-import CreateSupplyTx from '../Tools/SupplyMosaic.js';
+import CreateSupplyTx from '../Tools/CreateSupplyTx.js';
 import LeftToken from '../Tools/LeftToken.js';
 import GetCurrencyMosaicId from '../Tools/GetCurrencyMosaicId.js';
 import GetAddress from '../Tools/GetAddress.js';
